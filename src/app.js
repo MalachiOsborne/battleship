@@ -4,11 +4,8 @@ import lostSound from "./lostAudio.mp3"
 import splashSound from "./splash.mp3";
 import hitSound from "./hit.mp3";
 import sinkSound from "./shipsink.mp3";
-
+import placeSound from "./placing.mp3"
 import {  createShip, createGameboard, createPlayer, randomPlacement, randomReceiveAttack} from "./factories.js";
-
-
-
 
 function start() {
 
@@ -82,11 +79,13 @@ function start() {
   const ship4 = createShip(4);
   const ship5 = createShip(5);
   const shipsArr = [ship1, ship2, ship3, ship4, ship5];
+
   const winAudio = new Audio(winSound);
   const lostAudio = new Audio(lostSound);
   const splash = new Audio(splashSound);
   const hit = new Audio(hitSound);
   const sink = new Audio(sinkSound);
+  const placeAudio = new Audio(placeSound);
 
   let player;
   let system;
@@ -180,6 +179,7 @@ function start() {
         let shipId = e.dataTransfer.getData("shipId");
         let dockedShip = document.getElementById(shipId);
         if (dockedShip) {
+          placeAudio.play();
           dockedShip.setAttribute("draggable", "false");
           dockedShip.style.opacity = "0.3";
           console.log(`Ship of length ${length} placed at ${row}, ${startCol}`);
@@ -422,6 +422,4 @@ function start() {
 start();
 
 
-
-//soundeffect for placing ships
 

@@ -81,6 +81,7 @@ function start() {
   const ship3 = createShip(3);
   const ship4 = createShip(4);
   const ship5 = createShip(5);
+  const shipsArr = [ship1, ship2, ship3, ship4, ship5];
   const winAudio = new Audio(winSound);
   const lostAudio = new Audio(lostSound);
   const splash = new Audio(splashSound);
@@ -328,15 +329,26 @@ function start() {
     }
   });
 
+
   function attack(cell, x, y) {
+
+    let sunkBefore = computerBoardLogic.getShips().filter((ship) => ship.isSunk()).length;
     if (isNaN(x) || isNaN(y)) return;
 
     let attempt = computerBoardLogic.receiveAttack(x, y);
 
     if (attempt === true) {
+
+      let sunkAfter = computerBoardLogic
+        .getShips()
+        .filter((ship) => ship.isSunk()).length;
       cell.style.backgroundColor = "#ff0000";
       cell.style.pointerEvents = "none";
-      hit.play()
+      if (sunkAfter > sunkBefore) {
+        sink.play();
+      } else {
+        hit.play();
+      }
       if (computerBoardLogic.allShipsSunk()) {
         showGameOver(`${player.getName()} won!`);
         winAudio.play();
@@ -353,11 +365,13 @@ function start() {
       attacked.classList.remove("hidden");
       computerBoard.style.pointerEvents = "none";
 
-      setTimeout(getAttacked, 1000);
+      setTimeout(getAttacked, 1200);
     }
   }
 
   function getAttacked() {
+    let sunkBefore = shipsArr.filter((ship) => ship.isSunk()).length;
+
     let attackData = randomReceiveAttack(playerBoardLogic);
     let row = attackData[0];
     let col = attackData[1];
@@ -369,7 +383,15 @@ function start() {
 
     if (attempt === true) {
       targetCell.style.backgroundColor = "#ff0000";
-      hit.play();
+
+      let sunkAfter = shipsArr.filter((ship) => ship.isSunk()).length;
+
+      if (sunkAfter > sunkBefore) {
+        sink.play();
+      } else {
+        hit.play();
+      }
+
       if (playerBoardLogic.allShipsSunk()) {
         showGameOver(`${system.getName()} won!`);
         lostAudio.play();
@@ -377,7 +399,7 @@ function start() {
         playerBoard.style.pointerEvents = "none";
         return;
       }
-      setTimeout(getAttacked, 1000);
+      setTimeout(getAttacked, 1200);
     } else {
       targetCell.style.backgroundColor = "#604a4a";
       splash.play();
@@ -401,5 +423,5 @@ start();
 
 
 
-//soundeffect for sinking ship
+//soundeffect for placing ships
 

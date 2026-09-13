@@ -171,7 +171,9 @@ export function createGameboard() {
     return false;
   }
 
-  return { board, getMissedShots, placeShip, receiveAttack, allShipsSunk, changeOrientation, allShipsPlaced };
+  let getShips = () => ships;
+
+  return { getShips, board, getMissedShots, placeShip, receiveAttack, allShipsSunk, changeOrientation, allShipsPlaced };
 }
 
 export function createPlayer(name, type) {

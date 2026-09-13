@@ -1,14 +1,19 @@
 import "./styles.css";
 import winSound from "./winner.mp3";
-import lostSound from "./lostAudio.mp3"
+import lostSound from "./lostAudio.mp3";
 import splashSound from "./splash.mp3";
 import hitSound from "./hit.mp3";
 import sinkSound from "./shipsink.mp3";
-import placeSound from "./placing.mp3"
-import {  createShip, createGameboard, createPlayer, randomPlacement, randomReceiveAttack} from "./factories.js";
+import placeSound from "./placing.mp3";
+import {
+  createShip,
+  createGameboard,
+  createPlayer,
+  randomPlacement,
+  randomReceiveAttack,
+} from "./factories.js";
 
 function start() {
-
   document.body.innerHTML = `<header>
       <h1 style="font-family: cursive; font-size: 60px;">Rami's Battleship</h1>
     </header>
@@ -68,7 +73,6 @@ function start() {
   const modal = document.getElementById("game-over-modal");
   const modalText = document.getElementById("game-over-text");
   const playAgain = document.getElementById("play-again");
-
 
   playAgain.addEventListener("click", () => {
     start();
@@ -329,16 +333,15 @@ function start() {
     }
   });
 
-
   function attack(cell, x, y) {
-
-    let sunkBefore = computerBoardLogic.getShips().filter((ship) => ship.isSunk()).length;
+    let sunkBefore = computerBoardLogic
+      .getShips()
+      .filter((ship) => ship.isSunk()).length;
     if (isNaN(x) || isNaN(y)) return;
 
     let attempt = computerBoardLogic.receiveAttack(x, y);
 
     if (attempt === true) {
-
       let sunkAfter = computerBoardLogic
         .getShips()
         .filter((ship) => ship.isSunk()).length;
@@ -410,7 +413,6 @@ function start() {
     }
   }
 
-
   function showGameOver(message) {
     modalText.textContent = message;
     modal.classList.remove("hidden");
@@ -420,6 +422,3 @@ function start() {
 }
 
 start();
-
-
-

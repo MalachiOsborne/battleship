@@ -176,3 +176,13 @@ input:focus {
 #game-over-modal.hidden {
   display: none;
 }
+
+.buttons {
+  display: flex;
+}
+
+.mode {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}

@@ -1,78 +1,42 @@
 import "./styles.css";
 import winSound from "./winner.mp3";
-import lostSound from "./lostAudio.mp3"
+import lostSound from "./lostAudio.mp3";
 import splashSound from "./splash.mp3";
 import hitSound from "./hit.mp3";
 import sinkSound from "./shipsink.mp3";
-import placeSound from "./placing.mp3"
-import {  createShip, createGameboard, createPlayer, randomPlacement, randomReceiveAttack} from "./factories.js";
+import placeSound from "./placing.mp3";
+import {
+  createShip,
+  createGameboard,
+  createPlayer,
+  randomPlacement,
+  randomReceiveAttack,
+} from "./factories.js";
 
-function start() {
-
-  document.body.innerHTML = `<header>
-      <h1 style="font-family: cursive; font-size: 60px;">Rami's Battleship</h1>
-    </header>
-    <main class="game-container">
-
-      <div class="ship-dock">
-        <h2 style="margin-bottom: 30px; margin-top: 50px;">Place your ships!</h2>
-        <div id="fleet-container" class="fleet">
-
-          <div class="ship" id="ship-5" data-length="5" draggable="true">
-            <div class="ship-box"></div><div class="ship-box"></div><div class="ship-box"></div><div class="ship-box"></div><div class="ship-box"></div>
-          </div>
-
-          <div class="ship" id="ship-4" data-length="4" draggable="true">
-            <div class="ship-box"></div><div class="ship-box"></div><div class="ship-box"></div><div class="ship-box"></div>
-          </div>
-
-          <div class="ship" id="ship-3" data-length="3" draggable="true">
-            <div class="ship-box"></div><div class="ship-box"></div><div class="ship-box"></div>
-          </div>
-
-          <div class="ship" id="ship-2" data-length="2" draggable="true">
-            <div class="ship-box"></div><div class="ship-box"></div>
-          </div>
-
-          <div class="ship" data-length="1" id="ship-1" style="margin-bottom: 30px;" draggable="true">
-            <div class="ship-box"></div>
-          </div>
+/*
+<form id="modes">
+        <div class="mode">
+          <input type="radio" name="user_level" id="easy" checked>
+          <label for="easy">Easy</label>
         </div>
-        <span>When placed on the board, click to rotate</span>
-      </div>
-      <div class="player-side">
-        <div id="player-board" class="board">
-
+        <div class="mode">
+        <input type="radio" name="user_level" id="medium">
+          <label for="medium">Medium</label>
         </div>
-        <h1 class="attacked hidden">Getting Attacked...</h1>
-      </div>
-
-      <div class="computer-side hidden">
-        <div id="computer-board" class="board">
-
+        <div class="mode">
+            <input type="radio" name="user_level" id="hard">
+            <label for="hard">Hard</label>
         </div>
-        <h1 class="attack hidden">Attack!</h1>
-      </div>
-    </main>
-    <div class="starter">
-      <input type="text" id="player-name" placeholder="Enter your name">
-      <span style="margin-bottom: 10px;" id="ageError" class="error-message" role="alert" aria-live="polite"></span>
-      <button id="player-button">Play</button>
-    </div>
-    <div id="game-over-modal" class="hidden">
-      <div class="modal-content">
-        <h1 id="game-over-text"></h1>
-      </div>
-      <button id="play-again">Play Again?</button>
-    </div>`;
+
+      </form>
+ */
+
   const modal = document.getElementById("game-over-modal");
   const modalText = document.getElementById("game-over-text");
   const playAgain = document.getElementById("play-again");
 
-
-  playAgain.addEventListener("click", () => {
-    start();
-  });
+  playAgain.addEventListener("click", () => location.reload()
+  );
   const ship1 = createShip(1);
   const ship2 = createShip(2);
   const ship3 = createShip(3);
@@ -329,16 +293,15 @@ function start() {
     }
   });
 
-
   function attack(cell, x, y) {
-
-    let sunkBefore = computerBoardLogic.getShips().filter((ship) => ship.isSunk()).length;
+    let sunkBefore = computerBoardLogic
+      .getShips()
+      .filter((ship) => ship.isSunk()).length;
     if (isNaN(x) || isNaN(y)) return;
 
     let attempt = computerBoardLogic.receiveAttack(x, y);
 
     if (attempt === true) {
-
       let sunkAfter = computerBoardLogic
         .getShips()
         .filter((ship) => ship.isSunk()).length;
@@ -410,16 +373,10 @@ function start() {
     }
   }
 
-
   function showGameOver(message) {
     modalText.textContent = message;
     modal.classList.remove("hidden");
     computerBoard.style.pointerEvents = "none";
     playerBoard.style.pointerEvents = "none";
   }
-}
-
-start();
-
-
 

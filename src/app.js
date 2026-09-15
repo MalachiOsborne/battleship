@@ -13,19 +13,20 @@ import {
   randomReceiveAttack,
 } from "./factories.js";
 
-//to count attempts at hitting adjacent ones, max 4
-let attemptCounter = 0;
-//saves the hit index
-let currentHitIndex = [0, 0]
 
 const modal = document.getElementById("game-over-modal");
 const modalText = document.getElementById("game-over-text");
 const playAgain = document.getElementById("play-again");
 
-const difficultyLevel = [getAttacked, getAttackedMedium, getAttackedHard];
+const easyRadio = document.getElementById("easy");
+const mediumRadio = document.getElementById("medium");
+const hardRadio = document.getElementById("hard");
+
+let radios = [easyRadio, mediumRadio, hardRadio];
 
 playAgain.addEventListener("click", () => location.reload()
 );
+
 const ship1 = createShip(1);
 const ship2 = createShip(2);
 const ship3 = createShip(3);
@@ -42,6 +43,7 @@ const placeAudio = new Audio(placeSound);
 
 let player;
 let system;
+let difficulty;
 
 const button = document.getElementById("player-button");
 button.disabled = "true";
@@ -265,6 +267,8 @@ button.addEventListener("click", () => {
     input.style.backgroundColor = "#5e2929";
     return;
   } else {
+    difficulty = radios.find((radio) => radio.checked);
+    radios.map((radio) => radio.disabled = true);
     player = createPlayer(input.value, "human");
     system = createPlayer("The Matrix ", "computer");
 
@@ -316,8 +320,12 @@ function attack(cell, x, y) {
     attacking.classList.add("hidden");
     attacked.classList.remove("hidden");
     computerBoard.style.pointerEvents = "none";
-
-    setTimeout(getAttacked, 1200);
+    if (difficulty === easyRadio) {
+      setTimeout(getAttacked, 1200);
+    }
+    else if (difficulty === mediumRadio) {
+      setTimeout(getAttackedMedium, 1200)
+    }
   }
 }
 
@@ -334,16 +342,7 @@ function getAttacked() {
   );
 
   if (attempt === true) {
-    targetCell.style.backgroundColor = "#ff0000";
-
-    let sunkAfter = shipsArr.filter((ship) => ship.isSunk()).length;
-
-    if (sunkAfter > sunkBefore) {
-      sink.play();
-    } else {
-      hit.play();
-    }
-
+    updateCellOnHit(targetCell, sunkBefore);
     if (playerBoardLogic.allShipsSunk()) {
       showGameOver(`${system.getName()} won!`);
       lostAudio.play();
@@ -362,11 +361,26 @@ function getAttacked() {
   }
 }
 
+function showGameOver(message) {
+  modalText.textContent = message;
+  modal.classList.remove("hidden");
+  computerBoard.style.pointerEvents = "none";
+  playerBoard.style.pointerEvents = "none";
+}
+
+//to count attempts at hitting adjacent ones, max 4
+let attemptCounter = 0;
+//saves the hit index
+let currentHitIndex = [0, 0]
+const difficultyLevel = [getAttacked, getAttackedMedium];
+
 function getAttackedMedium() {
   let sunkBefore = shipsArr.filter((ship) => ship.isSunk()).length;
 
   let notMissed = true;
   let attackData = randomReceiveAttack(playerBoardLogic);
+  let row = attackData[0];
+  let col = attackData[1];
   if (attemptCounter === 0) {
     currentHitIndex[0] = attackData[0];
     currentHitIndex[1] = attackData[1];
@@ -380,16 +394,7 @@ function getAttackedMedium() {
   while (notMissed === true) {
     //init attempt
     if (attempt === true) {
-      targetCell.style.backgroundColor = "#ff0000";
-
-      let sunkAfter = shipsArr.filter((ship) => ship.isSunk()).length;
-
-      if (sunkAfter > sunkBefore) {
-        sink.play();
-      } else {
-        hit.play();
-      }
-
+      updateCellOnHit(targetCell, sunkBefore);
       if (playerBoardLogic.allShipsSunk()) {
         showGameOver(`${system.getName()} won!`);
         lostAudio.play();
@@ -398,23 +403,27 @@ function getAttackedMedium() {
         return;
       }
       //follow up attempt after init attempt
-      while (attackData[2] === true) {
+      while (true) {
         switch (attemptCounter) {
           case 0:
             attackData = receiveAttackMedium(playerBoardLogic, currentHitIndex[0] + 1, currentHitIndex[1]);
             if (attackData[2] === true) { currentHitIndex[0] = currentHitIndex[0] + 1 };
+            updateCellOnHit(targetCell, sunkBefore);
             break;
           case 1:
             attackData = receiveAttackMedium(playerBoardLogic, currentHitIndex[0], currentHitIndex[1] + 1);
             if (attackData[2] === true) { currentHitIndex[1] = currentHitIndex[1] + 1 };
+            updateCellOnHit(targetCell, sunkBefore);
             break;
           case 2:
             attackData = receiveAttackMedium(playerBoardLogic, row - 1, col);
             if (attackData[2] === true) { currentHitIndex[0] = currentHitIndex[0] - 1 };
+            updateCellOnHit(targetCell, sunkBefore);
             break;
           case 3:
             attackData = receiveAttackMedium(playerBoardLogic, row, col - 1);
             if (attackData[2] === true) { currentHitIndex[1] = currentHitIndex[1] - 1 };
+            updateCellOnHit(targetCell, sunkBefore);
             break;
         };
         attempt = false;
@@ -432,10 +441,16 @@ function getAttackedMedium() {
     }
   }
 }
-function showGameOver(message) {
-  modalText.textContent = message;
-  modal.classList.remove("hidden");
-  computerBoard.style.pointerEvents = "none";
-  playerBoard.style.pointerEvents = "none";
+
+function updateCellOnHit(targetCell, sunkBefore) {
+  targetCell.style.backgroundColor = "#ff0000";
+
+  let sunkAfter = shipsArr.filter((ship) => ship.isSunk()).length;
+
+  if (sunkAfter > sunkBefore) {
+    sink.play();
+  } else {
+    hit.play();
+  }
 }
 

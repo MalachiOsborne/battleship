@@ -11,6 +11,7 @@ import {
   createPlayer,
   randomPlacement,
   randomReceiveAttack,
+  receiveAttackMedium,
 } from "./factories.js";
 
 
@@ -372,72 +373,103 @@ function showGameOver(message) {
 let attemptCounter = 0;
 //saves the hit index
 let currentHitIndex = [0, 0]
-const difficultyLevel = [getAttacked, getAttackedMedium];
 
 function getAttackedMedium() {
   let sunkBefore = shipsArr.filter((ship) => ship.isSunk()).length;
 
+  let isReset = false;
   let notMissed = true;
-  let attackData = randomReceiveAttack(playerBoardLogic);
-  let row = attackData[0];
-  let col = attackData[1];
+  let isFirstAttempt = false;
+  //attempt is true just in case its not the first attempt
+  let attempt = true;
+
+  //if it is the first attempt, update attempt to true/false
   if (attemptCounter === 0) {
+    isFirstAttempt = true;
+    let attackData = randomReceiveAttack(playerBoardLogic);
+    console.log("ih");
     currentHitIndex[0] = attackData[0];
     currentHitIndex[1] = attackData[1];
+    attempt = attackData[2];
   }
-  let attempt = attackData[2];
 
   let targetCell = playerBoard.querySelector(
-    `.cell[data-row="${row}"][data-col="${col}"]`,
+    `.cell[data-row="${currentHitIndex[0]}"][data-col="${currentHitIndex[1]}"]`,
   );
 
-  while (notMissed === true) {
-    //init attempt
-    if (attempt === true) {
-      updateCellOnHit(targetCell, sunkBefore);
-      if (playerBoardLogic.allShipsSunk()) {
-        showGameOver(`${system.getName()} won!`);
-        lostAudio.play();
-        computerBoard.style.pointerEvents = "none";
-        playerBoard.style.pointerEvents = "none";
-        return;
+  while (isReset === false) {
+    //if hit
+    if (attempt === true || isFirstAttempt === false) {
+      //if its the first attempt of the current hit index
+      if (isFirstAttempt) {
+        updateCellOnHit(targetCell, sunkBefore);
+        isFirstAttempt = false;
       }
       //follow up attempt after init attempt
-      while (true) {
+      /*
+      * this will never be the first attempt cuz if it's the first attempt it will be 
+      * updated with the if statement above and if it is not the first attempt then
+      * it will continue as follows so it is irrelevant to put in the while loop param
+      */
+      while (notMissed === true) {
         switch (attemptCounter) {
           case 0:
-            attackData = receiveAttackMedium(playerBoardLogic, currentHitIndex[0] + 1, currentHitIndex[1]);
-            if (attackData[2] === true) { currentHitIndex[0] = currentHitIndex[0] + 1 };
-            updateCellOnHit(targetCell, sunkBefore);
+            //checks down
+            attempt = playerBoardLogic.receiveAttack(currentHitIndex[0] + 1, currentHitIndex[1]);
+            if (attempt === true) {
+              currentHitIndex[0] = currentHitIndex[0] + 1;
+              updateCellOnHit(targetCell, sunkBefore);
+            }
+            else {
+              attemptCounter++;
+              notMissed = false;
+            }
             break;
           case 1:
-            attackData = receiveAttackMedium(playerBoardLogic, currentHitIndex[0], currentHitIndex[1] + 1);
-            if (attackData[2] === true) { currentHitIndex[1] = currentHitIndex[1] + 1 };
-            updateCellOnHit(targetCell, sunkBefore);
+            attempt = playerBoardLogic.receiveAttack(currentHitIndex[0], currentHitIndex[1] + 1);
+            if (attempt === true) {
+              currentHitIndex[1] = currentHitIndex[1] + 1;
+              updateCellOnHit(targetCell, sunkBefore);
+            }
+            else {
+              attemptCounter++;
+              notMissed = false;
+            }
             break;
           case 2:
-            attackData = receiveAttackMedium(playerBoardLogic, row - 1, col);
-            if (attackData[2] === true) { currentHitIndex[0] = currentHitIndex[0] - 1 };
-            updateCellOnHit(targetCell, sunkBefore);
+            attempt = playerBoardLogic.receiveAttack(currentHitIndex[0] - 1, currentHitIndex[1]);
+            if (attempt === true) {
+              currentHitIndex[0] = currentHitIndex[0] - 1;
+              updateCellOnHit(targetCell, sunkBefore);
+            }
+            else {
+              attemptCounter++;
+              notMissed = false;
+            }
             break;
           case 3:
-            attackData = receiveAttackMedium(playerBoardLogic, row, col - 1);
-            if (attackData[2] === true) { currentHitIndex[1] = currentHitIndex[1] - 1 };
-            updateCellOnHit(targetCell, sunkBefore);
+            attempt = playerBoardLogic.receiveAttack(currentHitIndex[0], currentHitIndex[1] - 1);
+            if (attempt === true) {
+              currentHitIndex[1] = currentHitIndex[1] - 1;
+              updateCellOnHit(targetCell, sunkBefore);
+            }
+            else {
+              attemptCounter = 0;
+              notMissed = false;
+            }
+            break;
+          default:
+            attemptCounter = 0;
+            notMissed = false;
             break;
         };
-        attempt = false;
-        break;
       }
-    } else {
-      targetCell.style.backgroundColor = "#604a4a";
-      splash.play();
-
-      attacked.classList.add("hidden");
-      attacking.classList.remove("hidden");
-      computerBoard.style.pointerEvents = "auto";
+      //if it breaks out of the while loop it means it missed so we gotta change it to it missed just in case even if its redundant
       notMissed = false;
-      attemptCounter++;
+      isReset = true;
+    } else if (attempt !== true && isFirstAttempt === false) {
+      updateCellOnMiss(targetCell);
+      isReset = false;
     }
   }
 }
@@ -452,5 +484,26 @@ function updateCellOnHit(targetCell, sunkBefore) {
   } else {
     hit.play();
   }
+  checkPlayerLoss();
+}
+function updateCellOnMiss(targetCell) {
+  targetCell.style.backgroundColor = "#604a4a";
+  splash.play();
+
+  attacked.classList.add("hidden");
+  attacking.classList.remove("hidden");
+  computerBoard.style.pointerEvents = "auto";
 }
 
+function checkPlayerLoss() {
+
+  if (playerBoardLogic.allShipsSunk()) {
+    showGameOver(`${system.getName()} won!`);
+    lostAudio.play();
+    computerBoard.style.pointerEvents = "none";
+    playerBoard.style.pointerEvents = "none";
+    return;
+  }
+}
+
+//console.log(`case 3:current hit index row: ${currentHitIndex[0]} current hit index column: ${currentHitIndex[1]}`);

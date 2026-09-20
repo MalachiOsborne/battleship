@@ -269,10 +269,7 @@ export function randomReceiveAttack(board) {
 }
 
 export function receiveAttackMedium(board, rowAttacked, colAttacked) {
-  let result;
-  do {
-    result = board.receiveAttack(rowAttacked, colAttacked);
-  } while (result === null);
+  let result = board.receiveAttack(rowAttacked, colAttacked);
   return [rowAttacked, colAttacked, result];
 }
 

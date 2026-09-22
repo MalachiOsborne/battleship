@@ -268,9 +268,4 @@ export function randomReceiveAttack(board) {
   return [randomRow, randomCol, result];
 }
 
-export function receiveAttackMedium(board, rowAttacked, colAttacked) {
-  let result = board.receiveAttack(rowAttacked, colAttacked);
-  return [rowAttacked, colAttacked, result];
-}
-
 export const randomIndex = () => Math.floor(Math.random() * 10);

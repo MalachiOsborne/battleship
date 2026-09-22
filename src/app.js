@@ -11,7 +11,6 @@ import {
   createPlayer,
   randomPlacement,
   randomReceiveAttack,
-  receiveAttackMedium,
 } from "./factories.js";
 
 
@@ -325,6 +324,7 @@ function attack(cell, x, y) {
       setTimeout(getAttacked, 1200);
     }
     else if (difficulty === mediumRadio) {
+      console.log("hello")
       setTimeout(getAttackedMedium, 1200)
     }
   }
@@ -353,7 +353,9 @@ function getAttacked() {
     }
     setTimeout(getAttacked, 1200);
   } else {
-    targetCell.style.backgroundColor = "#604a4a";
+    // targetcell.style.backgroundcolor = "#604a4a";
+    updateCellOnMiss(targetCell);
+
     splash.play();
 
     attacked.classList.add("hidden");
@@ -370,109 +372,278 @@ function showGameOver(message) {
 }
 
 //to count attempts at hitting adjacent ones, max 4
-let attemptCounter = 0;
+let adjacentCount = 0;
 //saves the hit index
 let currentHitIndex = [0, 0]
 
 function getAttackedMedium() {
   let sunkBefore = shipsArr.filter((ship) => ship.isSunk()).length;
 
-  let isReset = false;
-  let notMissed = true;
-  let isFirstAttempt = false;
-  //attempt is true just in case its not the first attempt
-  let attempt = true;
-
   //if it is the first attempt, update attempt to true/false
-  if (attemptCounter === 0) {
-    isFirstAttempt = true;
+
+  let targetCell;
+  //adjacentCount === 0 means its a new attempt
+  if (adjacentCount === 0) {
     let attackData = randomReceiveAttack(playerBoardLogic);
-    console.log("ih");
-    currentHitIndex[0] = attackData[0];
-    currentHitIndex[1] = attackData[1];
-    attempt = attackData[2];
-  }
+    //check whether it's a hit or miss
+    let attempt = attackData[2];
+    let isRepeated = false;
 
-  let targetCell = playerBoard.querySelector(
-    `.cell[data-row="${currentHitIndex[0]}"][data-col="${currentHitIndex[1]}"]`,
-  );
-
-  while (isReset === false) {
     //if hit
-    if (attempt === true || isFirstAttempt === false) {
-      //if its the first attempt of the current hit index
-      if (isFirstAttempt) {
-        updateCellOnHit(targetCell, sunkBefore);
-        isFirstAttempt = false;
-      }
-      //follow up attempt after init attempt
-      /*
-      * this will never be the first attempt cuz if it's the first attempt it will be 
-      * updated with the if statement above and if it is not the first attempt then
-      * it will continue as follows so it is irrelevant to put in the while loop param
-      */
-      while (notMissed === true) {
-        switch (attemptCounter) {
+    if (attempt === true) {
+      currentHitIndex[0] = attackData[0];
+      currentHitIndex[1] = attackData[1];
+      targetCell = playerBoard.querySelector(`.cell[data-row="${currentHitIndex[0]}"][data-col="${currentHitIndex[1]}"]`);
+      updateCellOnHit(targetCell, sunkBefore);
+      while (isRepeated === false) {
+        switch (adjacentCount) {
+          //checks above
           case 0:
-            //checks down
-            attempt = playerBoardLogic.receiveAttack(currentHitIndex[0] + 1, currentHitIndex[1]);
-            if (attempt === true) {
-              currentHitIndex[0] = currentHitIndex[0] + 1;
-              updateCellOnHit(targetCell, sunkBefore);
-            }
-            else {
-              attemptCounter++;
-              notMissed = false;
-            }
-            break;
-          case 1:
-            attempt = playerBoardLogic.receiveAttack(currentHitIndex[0], currentHitIndex[1] + 1);
-            if (attempt === true) {
-              currentHitIndex[1] = currentHitIndex[1] + 1;
-              updateCellOnHit(targetCell, sunkBefore);
-            }
-            else {
-              attemptCounter++;
-              notMissed = false;
-            }
-            break;
-          case 2:
+            sunkBefore = shipsArr.filter((ship) => ship.isSunk()).length;
             attempt = playerBoardLogic.receiveAttack(currentHitIndex[0] - 1, currentHitIndex[1]);
-            if (attempt === true) {
+            if (attempt === null) {
+              if (adjacentCount === 3) {
+                adjacentCount = 0;
+                isRepeated = true;
+              }
+              else {
+                adjacentCount++;
+              }
+            }
+            //on hit
+            else if (attempt === true) {
+              //updates it to the hit index
               currentHitIndex[0] = currentHitIndex[0] - 1;
+              targetCell = playerBoard.querySelector(`.cell[data-row="${currentHitIndex[0]}"][data-col="${currentHitIndex[1]}"]`);
               updateCellOnHit(targetCell, sunkBefore);
             }
+            //on miss
             else {
-              attemptCounter++;
-              notMissed = false;
+              if (adjacentCount === 3) {
+                adjacentCount = 0;
+              }
+              else {
+                adjacentCount++;
+              }
+              targetCell = playerBoard.querySelector(`.cell[data-row="${currentHitIndex[0] - 1}"][data-col="${currentHitIndex[1]}"]`);
+              updateCellOnMiss(targetCell);
+              return;
             }
             break;
+          //checks right
+          case 1:
+            sunkBefore = shipsArr.filter((ship) => ship.isSunk()).length;
+            attempt = playerBoardLogic.receiveAttack(currentHitIndex[0], currentHitIndex[1] + 1);
+            if (attempt === null) {
+              if (adjacentCount === 3) {
+                adjacentCount = 0;
+                isRepeated = true;
+              }
+              else {
+                adjacentCount++;
+              }
+            }
+            //on hit
+            else if (attempt === true) {
+              //updates it to the hit index
+              currentHitIndex[1] = currentHitIndex[1] + 1;
+              targetCell = playerBoard.querySelector(`.cell[data-row="${currentHitIndex[0]}"][data-col="${currentHitIndex[1]}"]`);
+              updateCellOnHit(targetCell, sunkBefore);
+            }
+            //on miss
+            else {
+              if (adjacentCount === 3) {
+                adjacentCount = 0;
+              }
+              else {
+                adjacentCount++;
+              }
+              targetCell = playerBoard.querySelector(`.cell[data-row="${currentHitIndex[0]}"][data-col="${currentHitIndex[1] + 1}"]`);
+              updateCellOnMiss(targetCell);
+              return;
+            }
+            break;
+          //checks below
+          case 2:
+            sunkBefore = shipsArr.filter((ship) => ship.isSunk()).length;
+            attempt = playerBoardLogic.receiveAttack(currentHitIndex[0] + 1, currentHitIndex[1]);
+            if (attempt === null) {
+              if (adjacentCount === 3) {
+                adjacentCount = 0;
+                isRepeated = true;
+              }
+              else {
+                adjacentCount++;
+              }
+            }
+            //on hit
+            else if (attempt === true) {
+              //updates it to the hit index
+              currentHitIndex[0] = currentHitIndex[0] + 1;
+              targetCell = playerBoard.querySelector(`.cell[data-row="${currentHitIndex[0]}"][data-col="${currentHitIndex[1]}"]`);
+              updateCellOnHit(targetCell, sunkBefore);
+            }
+            //on miss
+            else {
+              if (adjacentCount === 3) {
+                adjacentCount = 0;
+              }
+              else {
+                adjacentCount++;
+              }
+              targetCell = playerBoard.querySelector(`.cell[data-row="${currentHitIndex[0] + 1}"][data-col="${currentHitIndex[1]}"]`);
+              updateCellOnMiss(targetCell);
+              return;
+            }
+            break;
+          //checks left
           case 3:
+            sunkBefore = shipsArr.filter((ship) => ship.isSunk()).length;
             attempt = playerBoardLogic.receiveAttack(currentHitIndex[0], currentHitIndex[1] - 1);
-            if (attempt === true) {
+            if (attempt === null) {
+              if (adjacentCount === 3) {
+                adjacentCount = 0;
+                isRepeated = true;
+              }
+              else {
+                adjacentCount++;
+              }
+            }
+            //on hit
+            else if (attempt === true) {
+              //updates it to the hit index
               currentHitIndex[1] = currentHitIndex[1] - 1;
+              targetCell = playerBoard.querySelector(`.cell[data-row="${currentHitIndex[0]}"][data-col="${currentHitIndex[1]}"]`);
               updateCellOnHit(targetCell, sunkBefore);
             }
+            //on miss
             else {
-              attemptCounter = 0;
-              notMissed = false;
+              if (adjacentCount === 3) {
+                adjacentCount = 0;
+              }
+              else {
+                adjacentCount++;
+              }
+              targetCell = playerBoard.querySelector(`.cell[data-row="${currentHitIndex[0]}"][data-col="${currentHitIndex[1] - 1}"]`);
+              updateCellOnMiss(targetCell);
+              return;
             }
-            break;
-          default:
-            attemptCounter = 0;
-            notMissed = false;
             break;
         };
       }
-      //if it breaks out of the while loop it means it missed so we gotta change it to it missed just in case even if its redundant
-      notMissed = false;
-      isReset = true;
-    } else if (attempt !== true && isFirstAttempt === false) {
-      updateCellOnMiss(targetCell);
-      isReset = false;
+    }
+    //if miss
+    else {
+      return;
+    }
+  }
+
+  //if adjacent count is not 0 means its not a new attempt
+  else {
+    while (adjacentCount !== 0) {
+
+      switch (adjacentCount) {
+        //checks right
+        case 1:
+          sunkBefore = shipsArr.filter((ship) => ship.isSunk()).length;
+          attempt = playerBoardLogic.receiveAttack(currentHitIndex[0], currentHitIndex[1] + 1);
+          if (attempt === null) {
+            if (adjacentCount === 3) {
+              adjacentCount = 0;
+            }
+            else {
+              adjacentCount++;
+            }
+          }
+          //on hit
+          else if (attempt === true) {
+            //updates it to the hit index
+            currentHitIndex[1] = currentHitIndex[1] + 1;
+            targetCell = playerBoard.querySelector(`.cell[data-row="${currentHitIndex[0]}"][data-col="${currentHitIndex[1]}"]`);
+            updateCellOnHit(targetCell, sunkBefore);
+          }
+          //on miss
+          else {
+            if (adjacentCount === 3) {
+              adjacentCount = 0;
+            }
+            else {
+              adjacentCount++;
+            }
+            targetCell = playerBoard.querySelector(`.cell[data-row="${currentHitIndex[0]}"][data-col="${currentHitIndex[1] + 1}"]`);
+            updateCellOnMiss(targetCell);
+            return;
+          }
+          break;
+        //checks below
+        case 2:
+          sunkBefore = shipsArr.filter((ship) => ship.isSunk()).length;
+          attempt = playerBoardLogic.receiveAttack(currentHitIndex[0] + 1, currentHitIndex[1]);
+          if (attempt === null) {
+            if (adjacentCount === 3) {
+              adjacentCount = 0;
+            }
+            else {
+              adjacentCount++;
+            }
+          }
+          //on hit
+          else if (attempt === true) {
+            //updates it to the hit index
+            currentHitIndex[0] = currentHitIndex[0] + 1;
+            targetCell = playerBoard.querySelector(`.cell[data-row="${currentHitIndex[0]}"][data-col="${currentHitIndex[1]}"]`);
+            updateCellOnHit(targetCell, sunkBefore);
+          }
+          //on miss
+          else {
+            if (adjacentCount === 3) {
+              adjacentCount = 0;
+            }
+            else {
+              adjacentCount++;
+            }
+            targetCell = playerBoard.querySelector(`.cell[data-row="${currentHitIndex[0] + 1}"][data-col="${currentHitIndex[1]}"]`);
+            updateCellOnMiss(targetCell);
+            return;
+          }
+          break;
+        //checks left
+        case 3:
+          sunkBefore = shipsArr.filter((ship) => ship.isSunk()).length;
+          attempt = playerBoardLogic.receiveAttack(currentHitIndex[0], currentHitIndex[1] - 1);
+          if (attempt === null) {
+            if (adjacentCount === 3) {
+              adjacentCount = 0;
+            }
+            else {
+              adjacentCount++;
+            }
+          }
+          //on hit
+          else if (attempt === true) {
+            //updates it to the hit index
+            currentHitIndex[1] = currentHitIndex[1] - 1;
+            targetCell = playerBoard.querySelector(`.cell[data-row="${currentHitIndex[0]}"][data-col="${currentHitIndex[1]}"]`);
+            updateCellOnHit(targetCell, sunkBefore);
+          }
+          //on miss
+          else {
+            if (adjacentCount === 3) {
+              adjacentCount = 0;
+            }
+            else {
+              adjacentCount++;
+            }
+            targetCell = playerBoard.querySelector(`.cell[data-row="${currentHitIndex[0]}"][data-col="${currentHitIndex[1] - 1}"]`);
+            updateCellOnMiss(targetCell);
+            return;
+          }
+          break;
+      };
     }
   }
 }
+
 
 function updateCellOnHit(targetCell, sunkBefore) {
   targetCell.style.backgroundColor = "#ff0000";
@@ -506,4 +677,3 @@ function checkPlayerLoss() {
   }
 }
 
-//console.log(`case 3:current hit index row: ${currentHitIndex[0]} current hit index column: ${currentHitIndex[1]}`);
